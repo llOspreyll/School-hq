@@ -1,15 +1,10 @@
-# Academic Ops // School HQ
+# Academic Ops // School HQ — V1.4
 
-V1.3 — Mission Control pass.
-
-Static GitHub Pages academic dashboard with local browser persistence.
-
-## Update
-Upload the contents of this folder to the repository root and replace the matching files.
-
-## V1.3
-- Reduced banner footprint while keeping the full composition
-- Mission-control semester metrics
-- Clickable course cards with dedicated course dashboards
-- Course mission queues, grade snapshots, notes, and quick status actions
-- Additional visual polish and hover feedback
+V1.4 reorganizes the app around useful workflows:
+- REM-421 data migration and full course history
+- Interactive Courses page
+- Assignment workboard (Kanban) with course filters/search
+- Calendar day viewer when more than four items exist
+- Grades grouped by course with expandable histories
+- Goals and Archive removed; grades remain in Grades
+- Existing local edits are preserved and missing seed records are merged in
