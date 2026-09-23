@@ -1,11 +1,15 @@
-# School HQ
+# Academic Ops // School HQ
 
-Academic Ops dashboard for Fall 2026.
+V1.3 — Mission Control pass.
 
-## GitHub Pages
-Upload these files to the root of the repository, then open **Settings → Pages** and deploy from the `main` branch, `/ (root)`.
+Static GitHub Pages academic dashboard with local browser persistence.
 
-Assignment edits are saved in the browser with `localStorage` in this first version.
+## Update
+Upload the contents of this folder to the repository root and replace the matching files.
 
-## V1.2 Elite Pass
-Desktop UI scale, spacing, calendar sizing, sidebar proportions, and visual depth refined for 2048px-class displays. Existing localStorage schema is unchanged.
+## V1.3
+- Reduced banner footprint while keeping the full composition
+- Mission-control semester metrics
+- Clickable course cards with dedicated course dashboards
+- Course mission queues, grade snapshots, notes, and quick status actions
+- Additional visual polish and hover feedback
