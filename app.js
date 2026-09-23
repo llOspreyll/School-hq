@@ -11,9 +11,29 @@ const raw=[
 ['Module 1 Recitation','GIS-421','2026-09-03','Graded','Recitation',10,10],['Module 1 Quiz','GIS-421','2026-09-06','Graded','Quiz',10,10],['Present Yourself','GIS-421','2026-09-06','Graded','Presentation',30,30],['Write About Yourself','GIS-421','2026-09-06','Graded','Assignment',30,30],['LiDAR Technology Quiz','GIS-421','2026-09-11','Graded','Quiz',10,10],['UAS Quiz','GIS-421','2026-09-20','Graded','Quiz',20,20],['Learn from yourselves','GIS-421','2026-09-20','Submitted','Assignment',null,10],['Module 2 Discussion','GIS-421','2026-09-20','Submitted','Discussion',null,10],['UAS Discussion','GIS-421','2026-09-20','Submitted','Discussion',null,10],['Earth Observation Lab','GIS-421','2026-09-27','Submitted','Lab',null,10],['Seeing the World Differently','GIS-421','2026-09-27','Not Started','Discussion',null,10],['Earth Observation Quiz','GIS-421','2026-09-27','Graded','Quiz',10,10],['LiDAR in the Real World','GIS-421','2026-09-27','Not Started','Presentation',null,30],['UAS Regulations','GIS-421','2026-09-27','Not Started','Assignment',null,30],['Earth Observation Technology and Use Case','GIS-421','2026-10-04','Not Started','Assignment',null,30]
 ];
 const seed=raw.map((x,i)=>({id:1000+i,name:x[0],course:x[1],due:x[2],status:x[3],type:x[4],earned:x[5],possible:x[6],notes:''}));
-let assignments=JSON.parse(localStorage.getItem('schoolhq.assignments')||'null')||[];
-// V1.4 migration: preserve user edits, but merge in any course data missing from older builds.
-for(const s of seed){if(!assignments.some(a=>a.course===s.course&&a.name===s.name&&a.due===s.due)) assignments.push({...s,id:Date.now()+s.id});}
+// V1.4.2: sanitize saved browser data BEFORE migration. Older builds may have left
+// malformed/null entries in localStorage; those must never be allowed to stop boot.
+let assignments=[];
+try{
+  const stored=JSON.parse(localStorage.getItem('schoolhq.assignments')||'[]');
+  assignments=Array.isArray(stored)?stored.filter(a=>a&&typeof a==='object'&&a.name&&a.course).map(a=>({
+    ...a,
+    id:a.id??(Date.now()+Math.floor(Math.random()*100000)),
+    due:String(a.due||TODAY),
+    status:a.status||'Not Started',
+    type:a.type||'Assignment',
+    earned:a.earned??null,
+    possible:a.possible??null,
+    notes:a.notes||''
+  })):[];
+}catch(e){
+  console.warn('Ignoring unreadable School HQ local data',e);
+  assignments=[];
+}
+// Preserve valid user edits, then merge any course records missing from older builds.
+for(const s of seed){
+  if(!assignments.some(a=>a.course===s.course&&a.name===s.name&&a.due===s.due)) assignments.push({...s,id:Date.now()+s.id});
+}
 localStorage.setItem('schoolhq.assignments',JSON.stringify(assignments));
 let monthView=new Date(2026,8,1), assignmentFilter='All', assignmentSearch=''; const $=id=>document.getElementById(id);
 const esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -44,6 +64,7 @@ function wireUI(){
 }
 function boot(){
   try{
+    document.documentElement.dataset.schoolhqBuild='1.4.2';
     // Normalize old local data so a stale browser record cannot crash the app.
     assignments=assignments.filter(a=>a&&a.name&&a.course).map(a=>({...a,due:String(a.due||TODAY),status:a.status||'Not Started',type:a.type||'Assignment',earned:a.earned??null,possible:a.possible??null,notes:a.notes||''}));
     save(); wireUI(); renderDashboard();

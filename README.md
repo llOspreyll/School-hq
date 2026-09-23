@@ -1,3 +1,3 @@
-# School HQ v1.4.1
+# Academic Ops // School HQ
 
-Bug-fix release for V1.4. Preserves localStorage data, safely normalizes older records, and prevents optional UI controls from stopping dashboard initialization.
+V1.4.2 stability hotfix. Same upload structure. Fixes pre-boot localStorage migration crash and cache-busts JS/CSS.
