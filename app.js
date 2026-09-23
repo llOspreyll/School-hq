@@ -17,7 +17,7 @@ for(const s of seed){if(!assignments.some(a=>a.course===s.course&&a.name===s.nam
 localStorage.setItem('schoolhq.assignments',JSON.stringify(assignments));
 let monthView=new Date(2026,8,1), assignmentFilter='All', assignmentSearch=''; const $=id=>document.getElementById(id);
 const esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const sorted=()=>[...assignments].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')); const save=()=>localStorage.setItem('schoolhq.assignments',JSON.stringify(assignments));
+const sorted=()=>[...assignments].filter(Boolean).sort((a,b)=>String(a.due||'9999').localeCompare(String(b.due||'9999'))); const save=()=>localStorage.setItem('schoolhq.assignments',JSON.stringify(assignments));
 const cls=c=>c==='ENG-101'?'eng':c==='GIS-220'?'g220':c==='GIS-421'?'g421':''; const score=a=>a.earned!=null&&a.possible?Math.round(a.earned/a.possible*100)+'%':'';
 function item(a){return `<div class="item" data-id="${a.id}"><span class="score">${a.status==='Graded'&&a.earned!=null?`${a.earned} / ${a.possible}`:''}</span><b>${esc(a.name)}</b><small>${a.course} · ${a.due}${score(a)?' · '+score(a):''}</small></div>`}
 function bindItems(){document.querySelectorAll('[data-id]').forEach(e=>e.onclick=()=>openAssignment(+e.dataset.id));}
@@ -32,5 +32,24 @@ function renderGrades(){showOnly('pageView');$('pageContent').innerHTML=`<div cl
 function showOnly(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active-view'));$(id).classList.add('active-view');}
 function navTo(v){document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));if(v==='dashboard'){showOnly('dashboardView');renderDashboard()}else if(v==='courses')renderCoursesPage();else if(v==='assignments')renderAssignments();else if(v==='grades')renderGrades();else if(v==='calendar'){showOnly('dashboardView');renderDashboard();setTimeout(()=>document.querySelector('.calendar-panel').scrollIntoView({behavior:'smooth'}),20)}}
 function openAssignment(id){let a=id?assignments.find(x=>x.id===id):null;$('modalTitle').textContent=a?'Edit Assignment':'New Assignment';$('assignmentId').value=a?.id||'';$('aName').value=a?.name||'';$('aCourse').innerHTML=courses.map(c=>`<option ${a?.course===c.code?'selected':''}>${c.code}</option>`).join('');$('aType').value=a?.type||'Assignment';$('aDue').value=a?.due||TODAY;$('aStatus').value=a?.status||'Not Started';$('aEarned').value=a?.earned??'';$('aPossible').value=a?.possible??'';$('aNotes').value=a?.notes||'';$('deleteAssignment').style.visibility=a?'visible':'hidden';$('assignmentDialog').showModal();}
-$('assignmentForm').onsubmit=e=>{e.preventDefault();let id=+$('assignmentId').value,obj={id:id||Date.now(),name:$('aName').value.trim(),course:$('aCourse').value,type:$('aType').value,due:$('aDue').value,status:$('aStatus').value,earned:$('aEarned').value===''?null:+$('aEarned').value,possible:$('aPossible').value===''?null:+$('aPossible').value,notes:$('aNotes').value};if(id)assignments[assignments.findIndex(x=>x.id===id)]=obj;else assignments.push(obj);save();$('assignmentDialog').close();navTo(document.querySelector('#nav button.active')?.dataset.view||'dashboard')};
-$('deleteAssignment').onclick=()=>{let id=+$('assignmentId').value;if(id&&confirm('Delete this assignment?')){assignments=assignments.filter(a=>a.id!==id);save();$('assignmentDialog').close();navTo('dashboard')}};$('cancelModal').onclick=$('cancelX').onclick=()=>$('assignmentDialog').close();$('dayClose').onclick=()=>$('dayDialog').close();$('newAssignment').onclick=()=>openAssignment();$('prev').onclick=()=>{monthView.setMonth(monthView.getMonth()-1);renderCalendar()};$('next').onclick=()=>{monthView.setMonth(monthView.getMonth()+1);renderCalendar()};$('today').onclick=()=>{monthView=new Date(2026,8,1);renderCalendar()};document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>navTo(b.dataset.view));renderDashboard();
+function wireUI(){
+  const form=$('assignmentForm');
+  if(form) form.addEventListener('submit',e=>{e.preventDefault();let id=+$('assignmentId').value,obj={id:id||Date.now(),name:$('aName').value.trim(),course:$('aCourse').value,type:$('aType').value,due:$('aDue').value,status:$('aStatus').value,earned:$('aEarned').value===''?null:+$('aEarned').value,possible:$('aPossible').value===''?null:+$('aPossible').value,notes:$('aNotes').value};if(id){let idx=assignments.findIndex(x=>x.id===id);if(idx>=0)assignments[idx]=obj;else assignments.push(obj)}else assignments.push(obj);save();$('assignmentDialog').close();navTo(document.querySelector('#nav button.active')?.dataset.view||'dashboard')});
+  const del=$('deleteAssignment'); if(del) del.addEventListener('click',()=>{let id=+$('assignmentId').value;if(id&&confirm('Delete this assignment?')){assignments=assignments.filter(a=>a.id!==id);save();$('assignmentDialog').close();navTo('dashboard')}});
+  const cancel=$('cancelModal'), cancelX=$('cancelX'); if(cancel) cancel.addEventListener('click',()=>$('assignmentDialog').close()); if(cancelX) cancelX.addEventListener('click',()=>$('assignmentDialog').close());
+  const dayClose=$('dayClose'); if(dayClose) dayClose.addEventListener('click',()=>$('dayDialog').close());
+  const add=$('newAssignment'); if(add) add.addEventListener('click',()=>openAssignment());
+  const prev=$('prev'), next=$('next'), todayBtn=$('today'); if(prev) prev.addEventListener('click',()=>{monthView.setMonth(monthView.getMonth()-1);renderCalendar()}); if(next) next.addEventListener('click',()=>{monthView.setMonth(monthView.getMonth()+1);renderCalendar()}); if(todayBtn) todayBtn.addEventListener('click',()=>{monthView=new Date(2026,8,1);renderCalendar()});
+  document.querySelectorAll('#nav button').forEach(b=>b.addEventListener('click',()=>navTo(b.dataset.view)));
+}
+function boot(){
+  try{
+    // Normalize old local data so a stale browser record cannot crash the app.
+    assignments=assignments.filter(a=>a&&a.name&&a.course).map(a=>({...a,due:String(a.due||TODAY),status:a.status||'Not Started',type:a.type||'Assignment',earned:a.earned??null,possible:a.possible??null,notes:a.notes||''}));
+    save(); wireUI(); renderDashboard();
+  }catch(err){
+    console.error('School HQ boot error',err);
+    const main=document.getElementById('main'); if(main) main.insertAdjacentHTML('afterbegin','<div class="panel danger" style="margin-bottom:12px"><h2>APP ERROR</h2><div style="color:#ffb1b1">'+esc(err?.message||String(err))+'</div></div>');
+  }
+}
+boot();
